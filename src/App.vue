@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-  <vue-me></vue-me>
+    <vue-me></vue-me>
   </div>
 </template>
 
@@ -23,5 +23,8 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+body {
+  background-color: #f7f7f7;
 }
 </style>

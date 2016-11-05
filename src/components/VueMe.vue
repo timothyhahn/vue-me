@@ -1,13 +1,13 @@
 <template>
-  <div class="vue-me">
-
-    <button v-on:click="loadItems" style="position: fixed">Hello</button> 
+  <div class="vue-me" v-infinite-scroll="debouncedLoad"  infinite-scroll-distance="distance">
     <div v-for="item in items" :key="item.itemId" class="vue-item" v-bind:style="{ backgroundImage: 'url(' + item.mediumPhotoUrl + ')' }">
     </div>
   </div>
 </template>
 
 <script>
+import _ from 'lodash';
+
 const endpoint = 'http://api.curalate.com/v1/like2buy/nordstrom/products.jsonp?limit=18&requestId=92705780-3626-46e0-99a0-c2038b4b5da0';
 
 const formatUrl = function formatUrl(order, timestamp) {
@@ -29,14 +29,19 @@ export default {
   data() {
     return {
       items: [],
+      distance: 100,
       bookmarkStoreOrder: null,
       bookmarkTimestamp: null,
-      outstandingAsyncAction: null,
+      outstandingAsyncAction: false,
+      cachedDebouncedLoad: null,
     };
   },
   methods: {
-    loadItems() {
-      this.outstandingAsyncAction = 'loadItems';
+    fetchItems() {
+      if (this.outstandingAsyncAction) {
+        return;
+      }
+      this.outstandingAsyncAction = true;
 
       this.$http.jsonp(
         formatUrl(this.bookmarkStoreOrder, this.bookmarkTimestamp)
@@ -46,23 +51,29 @@ export default {
         this.items = this.items.concat(body.items);
         this.bookmarkStoreOrder = body.bookmarkStoreOrder;
         this.bookmarkTimestamp = body.bookmarkTimestamp;
-      }, () => {
       }).finally(() => {
-        this.outstandingAsyncAction = null;
+        this.outstandingAsyncAction = false;
       });
     },
+    debouncedLoad() {
+      if (!this.cachedDebouncedLoad) {
+        this.cachedDebouncedLoad = _.debounce(this.fetchItems, 500);
+      }
+      this.cachedDebouncedLoad();
+    },
+  },
+  components: {
   },
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<!-- Add "scoped" attribute to limit SASS to this component only -->
+<style scoped lang="sass?outputStyle=expanded">
   .vue-item {
     float: left;
     width: calc(100% / 4);
     height: 347px;
     background-size: contain;
     background-repeat: no-repeat;
-
   }
-  </style>
+</style>
