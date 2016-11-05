@@ -1,12 +1,32 @@
 <template>
   <div class="vue-me" v-infinite-scroll="debouncedLoad"  infinite-scroll-distance="distance">
-    <div v-for="item in items" :key="item.itemId" class="vue-item" v-bind:style="{ backgroundImage: 'url(' + item.mediumPhotoUrl + ')' }">
-    </div>
+    <vue-item v-for="item in items" :key="item.itemId" :item="item" v-on:open-modal="openModal"></vue-item>
+    <modal v-if="previewItem" @close="previewItem = null">
+      <div slot="header">
+         <div class="modal-default-button" v-on:click="previewItem = null">X</div>
+      </div>
+      <div slot="body" class="preview-container">
+        <div class="photo-container">
+          <div class="photo" v-bind:style="{ backgroundImage: 'url(' + previewItem.largePhotoUrl + ')'}"></div>
+        </div>
+        <div class="products-container">
+          <div class="product" 
+               v-for="product in previewItem.products"
+               v-on:click="openProduct(product)"
+               v-bind:style="{ backgroundImage: 'url(' + (product.croppedThumbnailImageUrl || product.imageUrl) + ')'}">
+          </div>
+        </div>
+      </div>
+      <div slot="footer">
+      </div>
+    </modal>
   </div>
 </template>
 
 <script>
 import _ from 'lodash';
+import VueItem from './VueItem';
+import Modal from './Modal';
 
 const endpoint = 'http://api.curalate.com/v1/like2buy/nordstrom/products.jsonp?limit=18&requestId=92705780-3626-46e0-99a0-c2038b4b5da0';
 
@@ -34,6 +54,7 @@ export default {
       bookmarkTimestamp: null,
       outstandingAsyncAction: false,
       cachedDebouncedLoad: null,
+      previewItem: null,
     };
   },
   methods: {
@@ -61,19 +82,83 @@ export default {
       }
       this.cachedDebouncedLoad();
     },
+    openModal(item) {
+      this.previewItem = item;
+    },
+    openProduct(product) {
+      /* eslint-disable no-undef */
+      window.location.href = product.destinationUrl;
+      /* eslint-enable no-undef */
+    },
   },
   components: {
+    VueItem,
+    Modal,
   },
 };
 </script>
 
-<!-- Add "scoped" attribute to limit SASS to this component only -->
-<style scoped lang="sass?outputStyle=expanded">
-  .vue-item {
-    float: left;
-    width: calc(100% / 4);
-    height: 347px;
-    background-size: contain;
-    background-repeat: no-repeat;
+<style lang="sass?outputStyle=expanded">
+.vue-me {
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+
+  .modal-container {
+    width: 700px;
+    height: 420px;
+
+    .modal-header {
+      position: relative;
+      .modal-default-button {
+        padding: 6px;
+        position: absolute;
+        right: 0;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+
+    .modal-body {
+      height: 100%;
+      .preview-container {
+        height: 100%;
+        .photo-container {
+          float: left;
+          height: 100%;
+          width: 60%;
+          .photo {
+            height: 100%;
+            width: 100%;
+            background-size: contain;
+          }
+        }
+        .products-container {
+          float: left;
+
+          $container-padding: 26px;
+          height: calc(100% - #{$container-padding});
+          width: 40%;
+          overflow-y: scroll;
+          padding-top: $container-padding;
+          .product {
+            $padding: 6px;
+            float: left;
+            height: 140px;
+            width: calc(100% / 2 - #{$padding});
+            background-size: contain;
+            background-repeat: no-repeat;
+            padding-right: $padding;
+            padding-bottom: $padding;
+
+            &:hover {
+              cursor: pointer;
+            }
+          }
+        }
+      }
+    }
   }
+}
 </style>
